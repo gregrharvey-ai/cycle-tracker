@@ -15,6 +15,8 @@ No build step, no dependencies. Plain HTML, CSS and ES modules.
 
 Add to Home Screen and offline mode need the app served over **HTTPS**. Any static host works (Cloudflare Pages, Netlify, GitHub Pages): upload this folder as-is. The host only serves the files; it never receives her data. Then, on her iPhone in Safari: Share, then **Add to Home Screen**.
 
+Live site: https://gregrharvey-ai.github.io/cycle-tracker/ (GitHub Pages, served from the `main` branch; pushing to `main` updates it in about a minute).
+
 Note: data is per device and per web address. If the site address changes later, her data does not follow, so use Export (More tab) before moving.
 
 ## What is where
