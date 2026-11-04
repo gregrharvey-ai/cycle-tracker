@@ -241,6 +241,7 @@ details.tip[open] > summary { padding-bottom: 0.4rem; }
 .tag.well { background: #cfe8d3; color: #1f4a2a; }
 .tag.some { background: #f6e5b5; color: #5a4310; }
 .tag.trad { background: #e6dff3; color: #3f3068; }
+.tag.weak { background: #f1d3cf; color: #6a2a22; }
 .tag.kind { background: var(--card-2); color: var(--muted); }
 .safety { background: var(--warm-bg); border-left: 4px solid var(--warm); padding: 0.55rem 0.75rem; border-radius: 8px; margin: 0.6rem 0; font-size: 0.9rem; }
 .source { font-size: 0.78rem; color: var(--muted); }

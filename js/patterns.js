@@ -195,3 +195,43 @@ export function symptomTally(logs, fromDate, toDate) {
     .map(([symptom, set]) => ({ symptom, days: set.size, roughDays: rough.get(symptom)?.size ?? 0 }))
     .sort((a, b) => b.days - a.days || b.roughDays - a.roughDays);
 }
+
+// ---- cycle lengths ---------------------------------------------------------
+
+const EPISODE_GAP_DAYS = 7; // bleed days closer together than this belong to the same period
+
+// Groups logged bleed days into episodes (a period is often logged on several days).
+// Each episode: { start, end, days }.
+export function bleedEpisodes(bleeds) {
+  const dates = [...new Set(bleeds.map((b) => b.date))].sort();
+  const out = [];
+  for (const d of dates) {
+    const cur = out[out.length - 1];
+    if (cur && daysBetween(cur.end, d) <= EPISODE_GAP_DAYS) {
+      cur.end = d;
+      cur.days++;
+    } else {
+      out.push({ start: d, end: d, days: 1 });
+    }
+  }
+  return out;
+}
+
+// Gap in days between the start of one bleed episode and the start of the next,
+// newest first: [{ from, to, length }]. Meant for a plain list she can show a doctor,
+// not for prediction.
+export function cycleLengths(bleeds) {
+  const eps = bleedEpisodes(bleeds);
+  const out = [];
+  for (let i = 1; i < eps.length; i++) {
+    out.push({ from: eps[i - 1].start, to: eps[i].start, length: daysBetween(eps[i - 1].start, eps[i].start) });
+  }
+  return out.reverse();
+}
+
+// Short stats for the most recent cycles, or null if there are fewer than 2 lengths.
+export function cycleStats(lengths, n = 6) {
+  const recent = lengths.slice(0, n).map((c) => c.length);
+  if (recent.length < 2) return null;
+  return { count: recent.length, min: Math.min(...recent), max: Math.max(...recent) };
+}

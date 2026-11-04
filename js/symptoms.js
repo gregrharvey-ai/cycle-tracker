@@ -17,6 +17,9 @@ export const GROUPS = [
       { id: 'mood-swings', label: 'Mood swings' },
       { id: 'brain-fog', label: 'Brain fog' },
       { id: 'forgetfulness', label: 'Forgetfulness' },
+      { id: 'word-finding', label: 'Trouble finding words' },
+      { id: 'overwhelm', label: 'Overwhelmed or low motivation' },
+      { id: 'panic', label: 'Panic or dread' },
     ],
   },
   {
@@ -29,6 +32,13 @@ export const GROUPS = [
       { id: 'headache', label: 'Headaches or migraines' },
       { id: 'joint-aches', label: 'Joint aches' },
       { id: 'fatigue', label: 'Fatigue' },
+      { id: 'dizziness', label: 'Dizziness' },
+      { id: 'itchy-skin', label: 'Itchy or crawling skin' },
+      { id: 'bruising', label: 'Easy bruising' },
+      { id: 'tinnitus', label: 'Ringing in the ears' },
+      { id: 'urinary', label: 'Bladder urgency or leaks' },
+      { id: 'digestive', label: 'Nausea or gut upset' },
+      { id: 'dry-eyes', label: 'Dry or gritty eyes' },
     ],
   },
   {
@@ -38,6 +48,7 @@ export const GROUPS = [
       { id: 'hot-flashes', label: 'Hot flashes' },
       { id: 'night-sweats', label: 'Night sweats' },
       { id: 'poor-sleep', label: 'Trouble sleeping' },
+      { id: 'early-waking', label: 'Waking too early' },
     ],
   },
   {
@@ -58,6 +69,8 @@ export const GROUPS = [
       { id: 'palpitations', label: 'Heart palpitations' },
       { id: 'skin-hair', label: 'Dry skin or hair changes' },
       { id: 'weight', label: 'Weight changes' },
+      { id: 'alcohol-tolerance', label: 'Lower alcohol tolerance' },
+      { id: 'electric-shocks', label: 'Electric-shock feelings' },
     ],
   },
 ];
@@ -87,7 +100,30 @@ const SHORT = {
   palpitations: 'heart palpitations',
   'skin-hair': 'dry skin or hair changes',
   weight: 'weight changes',
+  'word-finding': 'trouble finding words',
+  overwhelm: 'feeling overwhelmed',
+  panic: 'panic or dread',
+  dizziness: 'dizziness',
+  'itchy-skin': 'itchy or crawling skin',
+  bruising: 'easy bruising',
+  tinnitus: 'ringing in the ears',
+  urinary: 'bladder urgency or leaks',
+  digestive: 'nausea or gut upset',
+  'dry-eyes': 'dry eyes',
+  'early-waking': 'waking too early',
+  'alcohol-tolerance': 'lower alcohol tolerance',
+  'electric-shocks': 'electric-shock feelings',
 };
+
+// Colors are assigned by position in this list. The original symptoms keep their
+// original order so existing calendars don't change color when new symptoms are added.
+const COLOR_ORDER = [
+  'rage', 'sadness', 'anxiety', 'mood-swings', 'brain-fog', 'forgetfulness',
+  'cramps', 'bloating', 'breast-tenderness', 'headache', 'joint-aches', 'fatigue',
+  'hot-flashes', 'night-sweats', 'poor-sleep',
+  'spotting', 'heavy-bleeding', 'cycle-change',
+  'low-libido', 'vaginal-dryness', 'palpitations', 'skin-hair', 'weight',
+];
 
 
 const BUILTIN = GROUPS.flatMap((g) => g.symptoms.map((s) => ({ ...s, group: g.id })));
@@ -113,7 +149,8 @@ export function shortLabel(id, custom = []) {
 
 // Golden-angle hue steps keep neighbouring symptoms visually distinct for any number of symptoms.
 export function colorOf(id, custom = []) {
-  const idx = Math.max(0, allSymptoms(custom).findIndex((s) => s.id === id));
+  const order = [...COLOR_ORDER, ...allSymptoms(custom).map((s) => s.id).filter((x) => !COLOR_ORDER.includes(x))];
+  const idx = Math.max(0, order.indexOf(id));
   const hue = Math.round((idx * 137.508) % 360);
   return `hsl(${hue} 58% ${idx % 2 ? 56 : 46}%)`;
 }

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   findDayPatterns, findTimePatterns, describeDayPattern, describeTimePattern, headsUps, symptomTally,
+  bleedEpisodes, cycleLengths, cycleStats,
 } from '../js/patterns.js';
 import { monthsAndDays, addMonths, daysBetween, addDays } from '../js/dates.js';
 
@@ -94,6 +95,18 @@ test('tally counts days not entries', () => {
   const logs = [log('2026-10-01', 'cramps'), log('2026-10-01', 'cramps', { src: 'quick' }), log('2026-10-02', 'cramps', { rating: 3 })];
   const t = symptomTally(logs, '2026-10-01', '2026-10-31');
   assert.deepEqual(t, [{ symptom: 'cramps', days: 2, roughDays: 1 }]);
+});
+
+test('bleed days group into episodes and cycle lengths are start to start', () => {
+  const b = (date) => ({ id: date, date, type: 'period' });
+  const bleeds = ['2026-06-01', '2026-06-02', '2026-06-04', '2026-07-05', '2026-07-06', '2026-09-20'].map(b);
+  const eps = bleedEpisodes(bleeds);
+  assert.deepEqual(eps.map((e) => [e.start, e.end, e.days]), [['2026-06-01', '2026-06-04', 3], ['2026-07-05', '2026-07-06', 2], ['2026-09-20', '2026-09-20', 1]]);
+  const lens = cycleLengths(bleeds);
+  assert.deepEqual(lens.map((c) => c.length), [77, 34]); // newest first
+  assert.deepEqual(cycleStats(lens), { count: 2, min: 34, max: 77 });
+  assert.equal(cycleStats(lens.slice(0, 1)), null);
+  assert.deepEqual(cycleLengths([b('2026-06-01')]), []);
 });
 
 console.log(`\n${n} tests passed`);

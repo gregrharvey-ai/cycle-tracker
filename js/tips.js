@@ -1,11 +1,13 @@
 // Resources: tips by symptom, each with an honest evidence tag and a source.
-// Tags: 'well' = Well studied, 'some' = Some evidence, 'trad' = Traditional use, little research.
+// Tags: 'well' = Well studied, 'some' = Some evidence, 'weak' = Studied, not shown to work (for the use named),
+// 'trad' = Traditional use, little research.
 // IMPORTANT: wording here is a starting draft for a layperson audience. Have a clinician
 // (or pharmacist, for the herb safety notes) review it before anyone beyond the first user uses the app.
 
 export const EVIDENCE = {
   well: { label: 'Well studied', hint: 'Backed by several good-quality studies or guidelines.' },
   some: { label: 'Some evidence', hint: 'Some studies point to a benefit, but they are small, short, or mixed.' },
+  weak: { label: 'Studied, not shown to work', hint: 'Tested in trials for the use named, but results were mostly negative or inconsistent, and guidelines do not recommend it for that.' },
   trad: { label: 'Traditional use, little research', hint: 'Used for a long time, but there is little good research.' },
 };
 
@@ -25,7 +27,7 @@ export const TIPS = [
   {
     id: 'cbt-sleep',
     title: 'CBT for insomnia',
-    symptoms: ['poor-sleep', 'night-sweats'],
+    symptoms: ['poor-sleep', 'night-sweats', 'early-waking'],
     kind: 'Mainstream',
     evidence: 'well',
     body: 'Cognitive behavioral therapy for insomnia (CBT-I) is the first-line treatment for long-term trouble sleeping, including during menopause. It works on sleep habits and worried thoughts about sleep, and is available through apps, books and therapists.',
@@ -34,10 +36,10 @@ export const TIPS = [
   {
     id: 'vaginal-moisturizer',
     title: 'Vaginal moisturizers, lubricants, and local estrogen',
-    symptoms: ['vaginal-dryness', 'low-libido'],
+    symptoms: ['vaginal-dryness', 'low-libido', 'urinary'],
     kind: 'Mainstream',
     evidence: 'well',
-    body: 'Regular non-hormonal vaginal moisturizers and lubricants for sex help many women. If they are not enough, low-dose vaginal estrogen is very effective and acts mostly in the local tissue. Ask your doctor, since dryness often gets worse over time without treatment.',
+    body: 'Regular non-hormonal vaginal moisturizers and lubricants for sex help many women. If they are not enough, low-dose vaginal estrogen is very effective and acts mostly in the local tissue. It can also help urinary urgency and repeat bladder infections linked to menopause. Ask your doctor, since these changes often get worse over time without treatment.',
     source: 'ACOG; The Menopause Society',
   },
   {
@@ -92,17 +94,17 @@ export const TIPS = [
   },
   {
     id: 'caffeine-alcohol-hot',
-    title: 'Notice caffeine and alcohol as hot flash triggers',
+    title: 'Notice your own hot flash triggers',
     symptoms: ['hot-flashes', 'night-sweats'],
     kind: 'Nutrition',
-    evidence: 'some',
-    body: 'Many women find caffeine, alcohol, spicy food and hot drinks bring on a hot flash. Studies on triggers are mixed, so it varies from person to person. Try keeping a note on bad days and see whether cutting back on one thing makes a difference for you.',
-    source: 'The Menopause Society patient information; observational studies',
+    evidence: 'weak',
+    body: 'Many women say caffeine, alcohol, spicy food or hot drinks bring on a hot flash. Studies have not shown that avoiding triggers reliably reduces hot flashes, and The Menopause Society does not recommend it as a treatment. It is harmless to watch for your own pattern, though: if one thing clearly sets yours off, cutting back is reasonable.',
+    source: 'The Menopause Society 2023 Nonhormone Therapy Position Statement; observational studies',
   },
   {
     id: 'caffeine-alcohol-sleep',
     title: 'Caffeine and alcohol and your sleep',
-    symptoms: ['poor-sleep', 'night-sweats', 'anxiety', 'palpitations'],
+    symptoms: ['poor-sleep', 'night-sweats', 'anxiety', 'palpitations', 'early-waking', 'alcohol-tolerance'],
     kind: 'Nutrition',
     evidence: 'well',
     body: 'Caffeine can stay in your body for 6 or more hours, and alcohol may help you fall asleep but breaks up sleep later in the night. Moving caffeine to the morning and keeping alcohol away from bedtime is one of the simplest things to try for sleep, anxiety and a racing heart.',
@@ -111,29 +113,29 @@ export const TIPS = [
   {
     id: 'omega3',
     title: 'Omega-3s: fish, and what supplements do (and do not) do',
-    symptoms: ['sadness', 'mood-swings', 'brain-fog', 'hot-flashes'],
+    symptoms: ['sadness', 'mood-swings', 'brain-fog'],
     kind: 'Nutrition',
     evidence: 'some',
-    body: 'Eating fatty fish (salmon, sardines, trout) twice a week is well supported for heart health, which matters after menopause. Omega-3 supplements may help mood a little in some studies, but trials in menopause have mostly not found they reduce hot flashes.',
+    body: 'Eating fatty fish (salmon, sardines, trout) twice a week is well supported for heart health, which matters after menopause. Omega-3 supplements may help mood a little in some studies. They have not been shown to reduce hot flashes, and The Menopause Society does not recommend them for that.',
     safety: 'High-dose fish oil can increase bleeding risk with blood thinners. ' + 'Check with a doctor or pharmacist if you take medications.',
     source: 'NIH Office of Dietary Supplements: Omega-3 Fatty Acids; American Heart Association',
   },
   {
     id: 'flax',
-    title: 'Ground flaxseed',
+    title: 'Ground flaxseed (for hot flashes)',
     symptoms: ['hot-flashes', 'bloating'],
     kind: 'Nutrition',
-    evidence: 'some',
-    body: 'Ground flaxseed is a good source of fiber and plant omega-3s, and a spoonful on yogurt or oatmeal is a harmless habit. Studies on whether it eases hot flashes are mixed; one Mayo Clinic trial found no benefit over placebo. Use ground rather than whole seeds, and drink water as you add fiber.',
+    evidence: 'weak',
+    body: 'Ground flaxseed is a good source of fiber and plant omega-3s, and a spoonful on yogurt or oatmeal is a harmless habit. As a hot flash remedy, though, the evidence is poor: one Mayo Clinic trial found no benefit over placebo. Use ground rather than whole seeds, and drink water as you add fiber.',
     source: 'NCCIH: Flaxseed and Flaxseed Oil; Pruthi et al., J Clin Oncol 2012',
   },
   {
     id: 'soy',
-    title: 'Soy foods',
+    title: 'Soy foods and soy supplements (for hot flashes)',
     symptoms: ['hot-flashes', 'night-sweats'],
     kind: 'Nutrition',
-    evidence: 'some',
-    body: 'Soy foods (tofu, edamame, tempeh, soy milk) contain plant compounds that act weakly like estrogen. Some studies show a small reduction in hot flashes, others show none, and it may take a few weeks to notice. Soy foods are generally considered safe as part of a normal diet.',
+    evidence: 'weak',
+    body: 'Soy foods (tofu, edamame, tempeh, soy milk) contain plant compounds that act weakly like estrogen. Studies of soy for hot flashes are inconsistent: some show a small effect, many show none, and The Menopause Society does not recommend soy or isoflavone supplements for hot flashes. Soy foods are still generally considered safe as part of a normal diet.',
     safety: 'If you have had a hormone-sensitive cancer, or take thyroid medication, ask your doctor before using soy supplements or large amounts.',
     source: 'NCCIH: Soy; Cochrane review of phytoestrogens for menopausal symptoms (Lethaby 2013)',
   },
@@ -144,8 +146,8 @@ export const TIPS = [
     title: 'Black cohosh',
     symptoms: ['hot-flashes', 'night-sweats', 'mood-swings'],
     kind: 'Herbal',
-    evidence: 'some',
-    body: 'A popular herb for hot flashes. Studies give mixed results: some show a small benefit, many show none. Professional guidelines do not recommend relying on it.',
+    evidence: 'weak',
+    body: 'A popular herb for hot flashes. It has been studied a lot, but results are inconsistent and the better trials mostly found no benefit over placebo. The Menopause Society does not recommend it, and there is no long-term safety data.',
     safety: 'Rare cases of liver problems have been reported. Stop and call a doctor if you notice dark urine, yellow skin or eyes, or severe stomach pain. Not for people with liver disease. ' + MED_NOTE,
     source: 'NCCIH: Black Cohosh; The Menopause Society 2023 position statement',
   },
@@ -154,7 +156,7 @@ export const TIPS = [
     title: 'Red clover',
     symptoms: ['hot-flashes'],
     kind: 'Herbal',
-    evidence: 'trad',
+    evidence: 'weak',
     body: 'Red clover contains plant estrogen-like compounds and is sold for hot flashes. Most trials have not found it works better than placebo.',
     safety: 'Because it acts like estrogen, avoid it if you have had a hormone-sensitive cancer. It may increase bleeding with blood thinners. ' + MED_NOTE,
     source: 'NCCIH: Red Clover',
@@ -164,7 +166,7 @@ export const TIPS = [
     title: 'Evening primrose oil',
     symptoms: ['hot-flashes', 'breast-tenderness', 'skin-hair'],
     kind: 'Herbal',
-    evidence: 'trad',
+    evidence: 'weak',
     body: 'Commonly used for hot flashes and breast tenderness. The small trials so far have not found a clear benefit over placebo for hot flashes, and the evidence for breast tenderness is weak.',
     safety: 'Can cause stomach upset and headache. Possible interactions with blood thinners and some seizure and psychiatric medicines. ' + MED_NOTE,
     source: 'NCCIH: Evening Primrose Oil; Chenoy et al., BMJ 1994',
@@ -175,7 +177,7 @@ export const TIPS = [
     symptoms: ['anxiety', 'poor-sleep', 'fatigue'],
     kind: 'Herbal',
     evidence: 'some',
-    body: 'An Ayurvedic herb. Several small, short trials suggest it may lower stress and anxiety and help sleep a little. Long-term safety is not well known.',
+    body: 'An Ayurvedic herb. Several small, short trials suggest it may lower stress and anxiety and help sleep a little. Those trials were in adults generally, not specifically in menopause, and long-term safety is not well known.',
     safety: 'There have been reports of liver injury. It can affect thyroid levels and may interact with thyroid, sedative, diabetes, blood pressure and immune-suppressing medicines. Avoid in pregnancy. ' + MED_NOTE,
     source: 'NCCIH: Ashwagandha; NIH Office of Dietary Supplements',
   },
@@ -197,7 +199,7 @@ export const TIPS = [
     symptoms: ['cramps', 'bloating'],
     kind: 'Self-care',
     evidence: 'some',
-    body: 'A heating pad or hot water bottle on the lower belly can ease period-type cramps, and in small studies worked about as well as over-the-counter pain relievers. It is low-risk. Use a cloth layer and avoid falling asleep on a heating pad.',
+    body: 'A heating pad or hot water bottle on the lower belly can ease period-type cramps, and in small studies worked about as well as over-the-counter pain relievers. (This is for cramps, not for hot flashes.) It is low-risk. Use a cloth layer and avoid falling asleep on a heating pad.',
     source: 'ACOG: Dysmenorrhea; Jo & Lee, Sci Rep 2018 (heat therapy review)',
   },
   {
@@ -206,16 +208,16 @@ export const TIPS = [
     symptoms: ['cramps', 'bloating', 'sadness', 'anxiety', 'poor-sleep', 'fatigue', 'joint-aches'],
     kind: 'Self-care',
     evidence: 'some',
-    body: 'Walking, stretching, yoga or swimming may reduce cramps and bloating, and regular exercise is linked with better mood and sleep. It does not reliably stop hot flashes, but it supports bones, heart and muscle. Even 10 minutes counts on rough days.',
+    body: 'Walking, stretching, yoga or swimming may reduce cramps and bloating, and regular exercise is linked with better mood and sleep. It has not been shown to reduce hot flashes, but it supports bones, heart and muscle. Even 10 minutes counts on rough days.',
     source: 'Cochrane review: Exercise for dysmenorrhoea (2019); Physical Activity Guidelines for Americans',
   },
   {
     id: 'breathing',
     title: 'Slow breathing for anxiety',
-    symptoms: ['anxiety', 'rage', 'mood-swings', 'palpitations', 'poor-sleep'],
+    symptoms: ['anxiety', 'panic', 'rage', 'mood-swings', 'palpitations', 'poor-sleep'],
     kind: 'Self-care',
     evidence: 'some',
-    body: 'Try breathing in through the nose for 4 seconds and out slowly for 6, for a few minutes. Slow breathing can lower stress and a racing feeling in the moment, with a small benefit for anxiety in studies. It has not been shown to reduce hot flashes.',
+    body: 'Try breathing in through the nose for 4 seconds and out slowly for 6, for a few minutes. Slow breathing can lower stress and a racing feeling in the moment, with a small benefit for anxiety in studies. It has not been shown to reduce hot flashes, and The Menopause Society does not recommend paced breathing for them.',
     source: 'Zaccaro et al., Front Hum Neurosci 2018 (slow breathing review); The Menopause Society 2023 position statement',
   },
   {
@@ -224,7 +226,7 @@ export const TIPS = [
     symptoms: ['hot-flashes', 'night-sweats', 'poor-sleep'],
     kind: 'Self-care',
     evidence: 'trad',
-    body: 'Dressing in layers, keeping a fan or cold drink handy, and a cool, dark bedroom with breathable bedding are common-sense tips women find practical. Research on them is limited, but they carry no risk.',
+    body: 'Dressing in layers, keeping a fan or cold drink handy, and a cool, dark bedroom with breathable bedding are common-sense tips women find practical. There is little research behind them and they are not a treatment, but they carry no risk.',
     source: 'The Menopause Society patient guidance',
   },
 ];
@@ -250,4 +252,4 @@ export function tipsFor(symptomIds, limit = 3, seed = 0) {
   return out;
 }
 
-const EVIDENCE_RANK = { well: 0, some: 1, trad: 2 };
+const EVIDENCE_RANK = { well: 0, some: 1, trad: 2, weak: 3 };
