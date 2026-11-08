@@ -498,6 +498,20 @@ function renderTips() {
 }
 
 // ---- MORE ------------------------------------------------------------------
+// ---- appearance (kept apart from the health data store) ---------------------
+function getAppearance() {
+  try { return localStorage.getItem('appearance') || 'light'; } catch { return 'light'; }
+}
+const darkQuery = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+function applyAppearance() {
+  const a = getAppearance();
+  const dark = a === 'dark' || (a === 'auto' && !!darkQuery?.matches);
+  document.documentElement.classList.toggle('dark', dark);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#1e1b1f' : '#faf6f1');
+}
+darkQuery?.addEventListener?.('change', applyAppearance);
+applyAppearance();
+
 function renderMore() {
   const st = store.getState();
   const bleeds = [...st.bleeds].sort((a, b) => (a.date < b.date ? 1 : -1));
@@ -509,6 +523,13 @@ function renderMore() {
         <a class="btn block" href="#/checkin" data-action="more-catchup">Add symptoms from a past day</a>
       </div>
       <p class="small muted">Start with your last few bleeds, then fill in symptom days. Each saved day offers "Do the day before" to move quickly. You can type or paste your notepad text into the notes box for each day.</p>
+    </div>
+
+    <div class="card"><h2 style="margin-top:0">Appearance</h2>
+      <div class="seg" role="group" aria-label="Appearance">
+        ${[['light', 'Light'], ['dark', 'Dark'], ['auto', 'Match phone']].map(([v, label]) => `<button type="button" data-action="appearance" data-value="${v}" aria-pressed="${getAppearance() === v}">${label}</button>`).join('')}
+      </div>
+      <p class="small muted">Light is the default. Dark is easier on the eyes at night.</p>
     </div>
 
     <div class="card"><h2 style="margin-top:0">Does a bleed countdown fit you?</h2>
@@ -617,6 +638,11 @@ const actions = {
   'open-quick': () => openQuick(),
   'close-sheet': () => closeSheet(),
   'dismiss-install': () => { try { localStorage.setItem('hint-install-dismissed', '1'); } catch { /* ignore */ } render(); },
+  appearance: (el) => {
+    try { localStorage.setItem('appearance', el.dataset.value); } catch { /* ignore */ }
+    applyAppearance();
+    render();
+  },
 
   'open-bleed': () => openBleedSheet(),
   'bleed-save': (el) => saveBleed(el.dataset.type, $('#bleed-date')?.value),
