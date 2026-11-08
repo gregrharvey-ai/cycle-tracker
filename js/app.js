@@ -3,7 +3,7 @@ import {
   toDateStr, parseDate, addDays, addMonths, daysBetween, monthsAndDays, monthKey,
   formatDate, formatTime, plural,
 } from './dates.js';
-import { GROUPS, RATINGS, allSymptoms, labelOf, colorOf } from './symptoms.js';
+import { GROUPS, RATINGS, allSymptoms, labelOf, shortLabel, colorOf } from './symptoms.js';
 import {
   findDayPatterns, findTimePatterns, describeDayPattern, describeTimePattern, headsUps, symptomTally,
   cycleLengths, cycleStats,
@@ -119,9 +119,13 @@ function tag(evidence) {
 
 function tipCard(t, open = false) {
   return `<details class="tip"${open ? ' open' : ''}>
-    <summary><strong>${esc(t.title)}</strong>${tag(t.evidence)}<span class="tag kind">${esc(t.kind)}</span></summary>
+    <summary>
+      <span class="tip-tags">${tag(t.evidence)}<span class="kind">${esc(t.kind)}</span></span>
+      <strong>${esc(t.title)}</strong>
+      <span class="tip-body">${esc(t.body)}</span>
+      <span class="tip-more">Read more</span>
+    </summary>
     <div class="body">
-      <p>${esc(t.body)}</p>
       ${t.safety ? `<div class="safety"><strong>Safety:</strong> ${esc(t.safety)}</div>` : ''}
       <p class="source">Source: ${esc(t.source)}</p>
     </div>
@@ -147,11 +151,22 @@ function symptomPills(action) {
 }
 
 // ---- HOME ------------------------------------------------------------------
+function greeting() {
+  const h = new Date().getHours();
+  const part = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  let name = 'Jen';
+  try { name = localStorage.getItem('greeting-name') ?? 'Jen'; } catch { /* ignore */ }
+  return name.trim() ? `${part}, ${name.trim()}` : part;
+}
+
 function renderHome() {
   const st = store.getState();
   const today = toDateStr();
   const last = store.lastBleed();
-  let html = `<h1>My Cycle</h1><p class="muted small">Private. Everything stays on this phone.</p>`;
+  let html = `<header class="hello">
+      <p class="dateline">${esc(formatDate(today, { weekday: 'long', month: 'long', day: 'numeric' }))}</p>
+      <h1>${esc(greeting())}</h1>
+    </header>`;
 
   if (isIosBrowserTab() && !localStorage.getItem('hint-install-dismissed')) {
     html += `<div class="card warm"><h3>Put this on your home screen</h3>
@@ -159,26 +174,7 @@ function renderHome() {
       <button class="link" data-action="dismiss-install">Got it</button></div>`;
   }
 
-  const done = store.checkinFor(today).done;
-  if (!done) {
-    const due = reminderDue();
-    html += `<div class="card ${due ? 'warm' : ''}"><h3>${due ? 'Time for your check-in' : "Today's check-in"}</h3>
-      <p class="muted">About 30 seconds. Tap the symptoms you have today.</p>
-      <a class="btn primary block" href="#/checkin">Check in</a></div>`;
-  }
-
-  if (store.backupDue()) {
-    html += `<div class="card warm"><h3>Time for a backup</h3>
-      <p>Your data lives only on this phone. A backup file saved to Files, iCloud Drive or emailed to yourself means it can't be lost with the phone.</p>
-      <div class="row"><button class="primary" data-action="export">Back up now</button><button data-action="snooze-backup">Remind me in a week</button></div></div>`;
-  }
-
-  const patterns = patternsNow();
-  for (const h of headsUps(patterns.day, today, 2, st.customSymptoms)) {
-    html += `<div class="card calm"><h3>${h.daysUntil === 0 ? 'Right now' : 'Heads up'}</h3><p>${esc(h.text)}</p>
-      <p class="small muted">Only you see this. It's based on what you logged, not a prediction.</p></div>`;
-  }
-
+  let notices = '';
   if (!countdownOn()) {
     html += `<div class="card calm"><h3>Symptom tracking only</h3>
       <p>The bleed countdown is off, because bleeding isn't a reliable guide for you (for example after a hysterectomy or ablation, or with a hormonal IUD, the pill or HRT). Check in on your symptoms and the pattern finder does the rest.</p>
@@ -201,40 +197,63 @@ function renderHome() {
     const total = daysBetween(last.date, mark);
     const pct = Math.min(100, Math.round((days / total) * 100));
     const reached = md.months >= 12;
+    const toGo = Math.max(0, daysBetween(today, mark));
     const detail = days === 0 ? 'Bleed logged today' : md.months ? `${plural(md.months, 'month')}, ${plural(md.days, 'day')}` : '';
     const ringC = 2 * Math.PI * 52;
     const ringOff = ringC * (1 - pct / 100);
-    html += `<div class="card countdown">
+    html += `<section class="countdown" aria-label="Countdown to the 12-month mark">
       <div class="ring" role="progressbar" aria-valuemin="0" aria-valuemax="12" aria-valuenow="${Math.min(12, md.months)}" aria-label="Months without a bleed, out of 12">
         <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="track" cx="60" cy="60" r="52"/><circle class="fill" cx="60" cy="60" r="52" stroke-dasharray="${ringC.toFixed(1)}" stroke-dashoffset="${ringOff.toFixed(1)}" transform="rotate(-90 60 60)"/></svg>
         <div class="ring-num"><div class="big">${days}</div><div class="ring-unit">${days === 1 ? 'day' : 'days'}</div></div>
       </div>
-      <div class="unit">since last bleed</div>
-      ${detail ? `<div class="detail">${esc(detail)}</div>` : ''}
-      <div class="small muted">${reached ? '12 months reached' : `${md.months} of 12 months &middot; ${plural(Math.max(0, daysBetween(today, mark)), 'day')} to go (${esc(formatDate(mark, { month: 'short', day: 'numeric', year: 'numeric' }))})`}</div>
-      <p class="small muted" style="margin-top:.6rem">Last bleed: ${esc(formatDate(last.date))} (${last.type})</p>
-    </div>`;
+      <p class="since">since your last bleed</p>
+      <p class="togo">${reached ? 'You have reached the 12-month mark' : `${plural(toGo, 'day')} to go until the 12-month mark`}</p>
+      <p class="small muted">${detail ? `${esc(detail)} &middot; ` : ''}Last bleed ${esc(formatDate(last.date, { month: 'short', day: 'numeric' }))} (${last.type})${reached ? '' : ` &middot; Mark: ${esc(formatDate(mark, { month: 'short', day: 'numeric', year: 'numeric' }))}`}</p>
+      <button type="button" class="link" data-action="open-bleed">I'm bleeding</button>
+    </section>`;
 
     if (reached) {
-      html += `<div class="card calm"><h3>12 months with no bleed</h3>
+      notices += `<div class="card calm"><h3>12 months with no bleed</h3>
         <p>This is the medical marker for menopause. It's worth telling your doctor, who can confirm it with you.</p></div>`;
     } else if (days >= 60) {
-      html += `<div class="card calm"><h3>60 days without a bleed</h3>
+      notices += `<div class="card calm"><h3>60 days without a bleed</h3>
         <p>Going 60 days or more between bleeds is common in late perimenopause. Periods often do come back after a long gap, and when one does it isn't a step backwards. Keep logging.</p></div>`;
     }
     for (const b of store.unsureBleeds().slice(0, 2)) {
-      html += `<div class="card warm"><h3>Does this bleed count?</h3>
+      notices += `<div class="card warm"><h3>Does this bleed count?</h3>
         <p>You logged ${esc(b.type)} on ${esc(formatDate(b.date))} and marked it "not sure", so the counter has not restarted. Decide now, or leave it and ask your doctor.</p>
         <div class="row"><button class="primary" data-action="bleed-count-yes" data-id="${esc(b.id)}">Yes, restart the count</button><button data-action="bleed-count-no" data-id="${esc(b.id)}">Leave it out</button></div></div>`;
     }
     if (last.afterMenopause && !st.dismissed[last.id]) {
-      html += `<div class="card warm"><h3>A note about this bleed</h3>
+      notices += `<div class="card warm"><h3>A note about this bleed</h3>
         <p>Going by the dates you've entered, this bleed came after 12 months with none. Bleeding after menopause should be checked by a doctor. Most causes are not serious, but it's always worth getting looked at.</p>
         <p class="small muted">If you still have older bleeds in your notepad, add them in More and this note will update.</p>
         <button class="link" data-action="dismiss-note" data-id="${esc(last.id)}">Got it</button></div>`;
     }
   }
 
+  const done = store.checkinFor(today).done;
+  const due = !done && reminderDue();
+  html += `<div class="card${due ? ' warm' : ''}">
+    <div class="card-head"><h2>${done ? 'Checked in today' : due ? 'Time for your check-in' : "Today's check-in"}</h2><span class="meta">${done ? 'Done' : 'About 30 seconds'}</span></div>
+    <p class="muted">${done ? 'Something came up later? You can still change today.' : 'Tap the symptoms you have today.'}</p>
+    <a class="btn${done ? '' : ' primary'} block" href="#/checkin">${done ? 'Edit today' : 'Check in'}</a></div>`;
+
+  const patterns = patternsNow();
+  for (const h of headsUps(patterns.day, today, 2, st.customSymptoms)) {
+    html += `<div class="card pattern"><span class="eyebrow">${h.daysUntil === 0 ? 'Right now' : 'Heads up'}</span><p class="pattern-text">${esc(h.text)}</p>
+      <p class="small muted">Only you see this. It's based on what you logged, not a prediction.</p></div>`;
+  }
+
+  html += notices;
+
+  if (store.backupDue()) {
+    html += `<div class="card warm"><h3>Time for a backup</h3>
+      <p>Your data lives only on this phone. A backup file saved to Files, iCloud Drive or emailed to yourself means it can't be lost with the phone.</p>
+      <div class="row"><button class="primary" data-action="export">Back up now</button><button data-action="snooze-backup">Remind me in a week</button></div></div>`;
+  }
+
+  if (!countdownOn()) html += `<button type="button" class="link center-link" data-action="open-bleed">Log a bleed</button>`;
   html += `<p class="small muted center" style="margin-top:1rem"><a href="#/more" style="color:inherit">Add past bleeds or symptoms from your notes</a></p>`;
   return html;
 }
@@ -287,31 +306,63 @@ function saveBleed(type, date) {
 }
 
 // ---- QUICK LOG -------------------------------------------------------------
+const QL_DEFAULT = ['hot-flashes', 'rage', 'sadness', 'anxiety', 'cramps', 'night-sweats', 'brain-fog', 'poor-sleep'];
+const QL_LABEL = {
+  'hot-flashes': 'Hot flash', rage: 'Rage', sadness: 'Sadness', anxiety: 'Anxiety',
+  cramps: 'Cramping', 'night-sweats': 'Night sweat', 'brain-fog': 'Brain fog', 'poor-sleep': 'Poor sleep',
+};
+const ICON = {
+  'hot-flashes': 'M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z',
+  rage: 'M13 2 3 14h9l-1 8 10-12h-9l1-8z',
+  sadness: 'M4 14.9A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.24M16 14v6M8 14v6M12 16v6',
+  anxiety: 'M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1',
+  cramps: 'M22 12h-4l-3 9L9 3l-3 9H2',
+  'night-sweats': 'M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z',
+  'brain-fog': 'M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z',
+  'poor-sleep': 'M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z',
+  close: 'M18 6 6 18M6 6l12 12',
+  left: 'm15 18-6-6 6-6',
+  right: 'm9 18 6-6-6-6',
+  dot: 'M12 8a4 4 0 1 0 0 8 4 4 0 1 0 0-8',
+};
+const icon = (id, cls = 'ico') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="${ICON[id] ?? ICON.dot}"/></svg>`;
+
+function quickGrid() {
+  const st = store.getState();
+  const counts = new Map();
+  st.logs.filter((l) => l.date >= addDays(toDateStr(), -60)).forEach((l) => counts.set(l.symptom, (counts.get(l.symptom) ?? 0) + 1));
+  const extra = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => id).filter((id) => !QL_DEFAULT.includes(id)).slice(0, 2);
+  return [...QL_DEFAULT, ...extra].map((id) => `<button type="button" class="ql-btn" data-action="ql-pick" data-id="${esc(id)}">${icon(id)}<span>${esc(QL_LABEL[id] ?? labelOf(id, st.customSymptoms))}</span></button>`).join('');
+}
+
 function openQuick() {
-  ui.ql = { rating: ui.ql.rating || 2, view: 'pick', entry: null };
+  ui.ql = { rating: 2, view: 'pick', entry: null };
   renderQuick();
 }
 
+function sheetHead(title) {
+  return `<div class="grab" aria-hidden="true"></div>
+    <div class="sheet-head"><h2 id="sheet-title">${esc(title)}</h2><button type="button" class="icon-btn" data-action="close-sheet" aria-label="Close">${icon('close')}</button></div>`;
+}
+
 function renderQuick() {
-  const { rating, view: v, entry } = ui.ql;
+  const { view: v, entry } = ui.ql;
   if (v === 'saved' && entry) {
-    const tips = tipsFor([entry.symptom], 3, ui.seed++);
-    openSheet(`<h2 id="sheet-title">Saved</h2>
-      <div class="card calm"><strong>${esc(labelOf(entry.symptom, custom()))}</strong>
-        <span class="rating-tag t${entry.rating}">${ratingName(entry.rating)}</span>
-        <div class="muted small">${esc(formatTime(entry.ts))}</div></div>
-      <div class="row"><button data-action="ql-undo">Undo</button><button class="primary" data-action="ql-again">Log another</button></div>
-      ${tips.length ? `<h2>Tips that may help</h2>${tips.map((t) => tipCard(t)).join('')}` : ''}
-      <button class="ghost block" style="margin-top:.8rem" data-action="close-sheet">Done</button>`);
+    const tips = tipsFor([entry.symptom], 3, ui.seed);
+    openSheet(`${sheetHead('Logged')}
+      <div class="ql-done" role="status"><span>${esc(labelOf(entry.symptom, custom()))} logged at ${esc(formatTime(entry.ts))}</span><button type="button" data-action="ql-undo">Undo</button></div>
+      <p class="q">How strong was it?</p>
+      <div class="seg" role="group" aria-label="How strong">
+        ${RATINGS.map((r) => `<button type="button" class="s${r.value}" data-action="ql-rate" data-v="${r.value}" aria-pressed="${entry.rating === r.value}">${r.label}</button>`).join('')}
+      </div>
+      <div class="row" style="margin-top:.9rem"><button type="button" data-action="ql-again">Log another</button><button type="button" class="primary" data-action="close-sheet">Done</button></div>
+      ${tips.length ? `<h3 class="tips-h">Tips that may help</h3>${tips.map((t) => tipCard(t)).join('')}` : ''}`);
     return;
   }
-  openSheet(`<h2 id="sheet-title">Quick log</h2>
-    <p class="muted">Pick how strong it is, then tap the symptom. It saves right away with the time.</p>
-    <div class="seg" role="group" aria-label="How strong">
-      ${RATINGS.map((r) => `<button type="button" class="s${r.value}" data-action="ql-rating" data-v="${r.value}" aria-pressed="${rating === r.value}">${r.label}</button>`).join('')}
-    </div>
-    ${symptomPills('ql-pick')}
-    <button class="ghost block" style="margin-top:1rem" data-action="close-sheet">Cancel</button>`);
+  openSheet(`${sheetHead("What's happening?")}
+    <p class="muted sub">Tap once. It's saved with the time.</p>
+    <div class="ql-grid">${quickGrid()}</div>
+    <details class="ql-more"><summary>More symptoms</summary>${symptomPills('ql-pick')}</details>`);
 }
 
 // ---- CHECK-IN --------------------------------------------------------------
@@ -371,7 +422,7 @@ function saveCheckin() {
     <button class="primary block" style="margin-top:.8rem" data-action="ci-finish">Done</button>`);
 }
 
-// ---- PATTERNS --------------------------------------------------------------
+// ---- PATTERNS (Calendar tab) ----------------------------------------------
 function renderPatterns() {
   const st = store.getState();
   const today = toDateStr();
@@ -379,21 +430,36 @@ function renderPatterns() {
   const first = st.logs.reduce((m, l) => (!m || l.date < m ? l.date : m), null);
   const tracked = first ? daysBetween(first, today) + 1 : 0;
 
-  let html = `<h1>Patterns</h1><h2 style="margin-top:.6rem">What I'm noticing</h2>`;
+  let html = calendarHtml();
+  html += monthStatsHtml();
   if (day.length || time.length) {
-    html += day.map((p) => `<div class="card calm"><p style="margin:0">${esc(describeDayPattern(p, st.customSymptoms))}</p></div>`).join('');
-    html += time.map((t) => `<div class="card calm"><p style="margin:0">${esc(describeTimePattern(t, st.customSymptoms))}</p></div>`).join('');
+    html += day.map((p) => `<div class="card pattern"><span class="eyebrow">Pattern spotted</span><p class="pattern-text">${esc(describeDayPattern(p, st.customSymptoms))}</p></div>`).join('');
+    html += time.map((t) => `<div class="card pattern"><span class="eyebrow">Pattern spotted</span><p class="pattern-text">${esc(describeTimePattern(t, st.customSymptoms))}</p></div>`).join('');
     html += `<p class="small muted">These are things you've logged coming back around the same time. They're not predictions or a diagnosis, but they're good to bring to your doctor.</p>`;
   } else {
     const pct = Math.min(100, Math.round((tracked / 90) * 100));
-    html += `<div class="card"><p style="margin-top:0">Nothing repeating yet. The pattern finder needs about 3 months of check-ins to spot symptoms that come back around the same days.</p>
+    html += `<div class="card pattern"><span class="eyebrow">Pattern finder</span>
+      <p style="margin-top:.2rem">Nothing repeating yet. It needs about 3 months of check-ins to spot symptoms that come back around the same days.</p>
       <div class="progress" aria-hidden="true"><i style="width:${pct}%"></i></div>
       <p class="small muted" style="margin-bottom:0">${tracked ? `You have ${plural(tracked, 'day')} of history so far.` : 'Nothing logged yet.'} Catching up from a notepad counts: add old days in <a href="#/more">More</a>.</p></div>`;
   }
   html += cycleLengthsHtml();
-  html += calendarHtml();
   html += `<a class="btn block" style="margin-top:1rem" href="#/summary">One-page summary for the doctor</a>`;
   return html;
+}
+
+function monthStatsHtml() {
+  const st = store.getState();
+  const prefix = `${ui.cal.month}-`;
+  const days = new Map();
+  for (const l of st.logs) {
+    if (!l.date.startsWith(prefix)) continue;
+    if (!days.has(l.symptom)) days.set(l.symptom, new Set());
+    days.get(l.symptom).add(l.date);
+  }
+  const top = [...days.entries()].map(([id, set]) => ({ id, n: set.size })).sort((a, b) => b.n - a.n).slice(0, 3);
+  if (!top.length) return '';
+  return `<div class="stats">${top.map((t) => `<div class="stat"><span class="num">${t.n}</span><span class="lbl">${t.n === 1 ? 'day' : 'days'} of ${esc(shortLabel(t.id, st.customSymptoms))}</span></div>`).join('')}</div>`;
 }
 
 function cycleLengthsHtml() {
@@ -424,8 +490,8 @@ function calendarHtml() {
   const bleeds = new Map(st.bleeds.filter((b) => b.date.startsWith(prefix)).map((b) => [b.date, b]));
   const monthSymptoms = new Set([...byDay.values()].flatMap((s) => [...s]));
 
-  let cells = ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d) => `<div class="dow">${d}</div>`).join('');
-  for (let i = 0; i < first.getDay(); i++) cells += `<button class="day empty" tabindex="-1" aria-hidden="true"></button>`;
+  let cells = ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d) => `<div class="dow" aria-hidden="true">${d}</div>`).join('');
+  for (let i = 0; i < first.getDay(); i++) cells += `<span class="day empty" aria-hidden="true"></span>`;
   for (let d = 1; d <= dim; d++) {
     const ds = `${prefix}${String(d).padStart(2, '0')}`;
     const syms = [...(byDay.get(ds) ?? [])];
@@ -434,17 +500,19 @@ function calendarHtml() {
     const bl = bleeds.get(ds);
     const cls = ['day', ds === today && 'today', ds === ui.cal.selected && 'sel', ds > today && 'future'].filter(Boolean).join(' ');
     cells += `<button class="${cls}" data-action="cal-day" data-date="${ds}" aria-label="${esc(formatDate(ds, { weekday: 'long', month: 'long', day: 'numeric' }))}${syms.length ? `, ${plural(syms.length, 'symptom')}` : ''}${bl ? `, ${bl.type}` : ''}">
-      <span>${d}</span><span class="dots">${dots || '&nbsp;'}</span>${bl ? `<span class="bleed ${bl.type === 'spotting' ? 'spot' : ''}"></span>` : ''}</button>`;
+      <span class="n">${d}</span><span class="dots">${dots}</span>${bl ? `<span class="bleed ${bl.type === 'spotting' ? 'spot' : ''}"></span>` : ''}</button>`;
   }
 
   const key = [...monthSymptoms].map((s) => `<span><span class="swatch" style="background:${colorOf(s, st.customSymptoms)}"></span>${esc(labelOf(s, st.customSymptoms))}</span>`).join('');
-  const title = new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  const sameYear = String(y) === today.slice(0, 4);
+  const title = new Date(y, m - 1, 1).toLocaleDateString(undefined, sameYear ? { month: 'long' } : { month: 'long', year: 'numeric' });
+  const atNow = ui.cal.month >= today.slice(0, 7);
 
-  return `<h2>Calendar</h2><div class="card">
-    <div class="cal-head"><button data-action="cal-prev" aria-label="Previous month">&lsaquo;</button><h2>${esc(title)}</h2><button data-action="cal-next" aria-label="Next month" ${ui.cal.month >= today.slice(0, 7) ? 'disabled style="opacity:.4"' : ''}>&rsaquo;</button></div>
-    <div class="cal">${cells}</div>
-    <div class="key">${key}<span><span class="bleed" style="display:inline-block;vertical-align:middle;margin-right:6px;width:14px;height:6px;border-radius:3px;background:var(--danger)"></span>Period</span><span><span style="display:inline-block;vertical-align:middle;margin-right:6px;width:14px;height:7px;border-radius:3px;border:2px solid var(--danger)"></span>Spotting</span></div>
-  </div>${dayDetailHtml()}`;
+  return `<div class="cal-head"><h1>${esc(title)}</h1>
+      <div class="cal-nav"><button type="button" class="icon-btn" data-action="cal-prev" aria-label="Previous month">${icon('left')}</button><button type="button" class="icon-btn" data-action="cal-next" aria-label="Next month" ${atNow ? 'disabled' : ''}>${icon('right')}</button></div></div>
+    <div class="card cal-card"><div class="cal">${cells}</div></div>
+    <div class="key">${key}<span><span class="bleed-key"></span>Period</span><span><span class="bleed-key spot"></span>Spotting</span></div>
+    ${dayDetailHtml()}`;
 }
 
 function dayDetailHtml() {
@@ -467,7 +535,7 @@ function dayDetailHtml() {
     </div></div>`;
 }
 
-// ---- TIPS ------------------------------------------------------------------
+// ---- TIPS (Learn tab) ------------------------------------------------------
 function renderTips() {
   const st = store.getState();
   const syms = allSymptoms(st.customSymptoms);
@@ -485,16 +553,16 @@ function renderTips() {
   } else {
     body = list.map((t) => tipCard(t)).join('');
   }
-  return `<h1>Tips</h1>
-    <p class="muted">Both mainstream and natural options, each tagged with how well it's backed by research. This is general information, not medical advice.</p>
-    <div class="card calm"><p style="margin:0"><strong>For hot flashes and night sweats,</strong> the treatments with good evidence are medical (hormone therapy and some non-hormone medicines). The Menopause Society's 2023 review does not recommend herbs, supplements, soy, or avoiding triggers for them, because trials were inconsistent. Some of those tips are still here, tagged honestly, so you can see why.</p></div>
-    <div class="card"><h3>What the tags mean</h3>
-      ${Object.entries(EVIDENCE).map(([k, e]) => `<p style="margin:.3rem 0">${tag(k)} <span class="small">${esc(e.hint)}</span></p>`).join('')}
-    </div>
-    <label for="tips-filter">Show tips for</label>
-    <select id="tips-filter"><option value="all"${f === 'all' ? ' selected' : ''}>Everything</option>
-      ${withTips.map((s) => `<option value="${esc(s.id)}"${f === s.id ? ' selected' : ''}>${esc(s.label)}</option>`).join('')}</select>
-    ${body}`;
+  const chips = [['all', 'All'], ...withTips.map((s) => [s.id, QL_LABEL[s.id] ?? s.label])];
+  const heat = f === 'all' || f === 'hot-flashes' || f === 'night-sweats';
+  return `<h1>Learn</h1>
+    <p class="lead">Food, herbs, habits and treatments, each tagged by how well it's studied. General information, not medical advice.</p>
+    <div class="chips" role="group" aria-label="Show tips for">${chips.map(([v, l]) => `<button type="button" data-action="tips-filter" data-v="${esc(v)}" aria-pressed="${f === v}">${esc(l)}</button>`).join('')}</div>
+    ${heat ? `<div class="card calm"><p style="margin:0"><strong>For hot flashes and night sweats,</strong> the treatments with good evidence are medical (hormone therapy and some non-hormone medicines). The Menopause Society's 2023 review does not recommend herbs, supplements, soy, or avoiding triggers for them, because trials were inconsistent. Some of those tips are still here, tagged honestly, so you can see why.</p></div>` : ''}
+    ${body || '<p class="muted">No tips for this one yet.</p>'}
+    <details class="card tags-key"><summary><strong>What the tags mean</strong></summary>
+      ${Object.entries(EVIDENCE).map(([k, e]) => `<p style="margin:.4rem 0">${tag(k)} <span class="small">${esc(e.hint)}</span></p>`).join('')}
+    </details>`;
 }
 
 // ---- MORE ------------------------------------------------------------------
@@ -690,6 +758,15 @@ const actions = {
     toast('Removed.');
   },
   'ql-again': () => { ui.ql = { ...ui.ql, view: 'pick', entry: null }; renderQuick(); },
+  'ql-rate': (el) => {
+    const e = ui.ql.entry;
+    if (!e) return;
+    store.removeLog(e.id);
+    ui.ql.entry = store.addQuickLog(e.symptom, Number(el.dataset.v), e.ts);
+    ui.ql.rating = Number(el.dataset.v);
+    renderQuick();
+  },
+  'tips-filter': (el) => { ui.tipsFilter = el.dataset.v; render(); },
 
   'ci-cycle': (el) => {
     const id = el.dataset.id;
