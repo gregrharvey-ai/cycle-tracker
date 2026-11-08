@@ -202,11 +202,15 @@ function renderHome() {
     const pct = Math.min(100, Math.round((days / total) * 100));
     const reached = md.months >= 12;
     const detail = days === 0 ? 'Bleed logged today' : md.months ? `${plural(md.months, 'month')}, ${plural(md.days, 'day')}` : '';
+    const ringC = 2 * Math.PI * 52;
+    const ringOff = ringC * (1 - pct / 100);
     html += `<div class="card countdown">
-      <div class="big">${days}</div>
-      <div class="unit">${days === 1 ? 'day' : 'days'} since last bleed</div>
+      <div class="ring" role="progressbar" aria-valuemin="0" aria-valuemax="12" aria-valuenow="${Math.min(12, md.months)}" aria-label="Months without a bleed, out of 12">
+        <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="track" cx="60" cy="60" r="52"/><circle class="fill" cx="60" cy="60" r="52" stroke-dasharray="${ringC.toFixed(1)}" stroke-dashoffset="${ringOff.toFixed(1)}" transform="rotate(-90 60 60)"/></svg>
+        <div class="ring-num"><div class="big">${days}</div><div class="ring-unit">${days === 1 ? 'day' : 'days'}</div></div>
+      </div>
+      <div class="unit">since last bleed</div>
       ${detail ? `<div class="detail">${esc(detail)}</div>` : ''}
-      <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="12" aria-valuenow="${Math.min(12, md.months)}" aria-label="Months without a bleed, out of 12"><i style="width:${pct}%"></i></div>
       <div class="small muted">${reached ? '12 months reached' : `${md.months} of 12 months &middot; ${plural(Math.max(0, daysBetween(today, mark)), 'day')} to go (${esc(formatDate(mark, { month: 'short', day: 'numeric', year: 'numeric' }))})`}</div>
       <p class="small muted" style="margin-top:.6rem">Last bleed: ${esc(formatDate(last.date))} (${last.type})</p>
     </div>`;
