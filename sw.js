@@ -1,6 +1,6 @@
 // Offline support. Network first (so updates always arrive when online), cache as the fallback
 // (so the app opens with no signal). Bump CACHE if files are renamed or removed.
-const CACHE = 'cycle-app-v8';
+const CACHE = 'cycle-app-v9';
 const FILES = [
   './', 'index.html', 'styles.css', 'manifest.webmanifest',
   'js/app.js', 'js/store.js', 'js/dates.js', 'js/symptoms.js', 'js/patterns.js', 'js/tips.js',
@@ -23,7 +23,7 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
   event.respondWith(
-    fetch(req)
+    fetch(req, { cache: 'no-cache' })
       .then((res) => {
         if (res.ok) {
           const copy = res.clone();
